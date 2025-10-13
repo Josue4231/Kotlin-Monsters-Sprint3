@@ -146,45 +146,126 @@ fun executePreparedStatement() {
     assertEquals(3, dresseurs.size)
 }
 
-🧠 Étape 6 — Création du DAO (Data Access Object)
+## ⚙️ Étape 6 — Création du DAO (suite)
 
-Créez un package DAO puis une classe EntraineurDAO :
+Après avoir créé `EntraineurDAO` avec les méthodes `findAll()` et `findById()`, complétons-le avec les autres opérations CRUD essentielles :
 
-class EntraineurDAO(val bdd: BDD = db) {
-    
-    fun findAll(): MutableList<Entraineur> {
-        val result = mutableListOf<Entraineur>()
-        val sql = "SELECT * FROM Entraineurs"
-        val requetePreparer = bdd.connectionBDD!!.prepareStatement(sql)
-        val resultatRequete = bdd.executePreparedStatement(requetePreparer)
+### Méthode `findByNom`
 
-        if (resultatRequete != null) {
-            while (resultatRequete.next()) {
-                val id = resultatRequete.getInt("id")
-                val nom = resultatRequete.getString("nom")
-                val argents = resultatRequete.getInt("argents")
-                result.add(Entraineur(id, nom, argents))
-            }
-        }
-        requetePreparer.close()
-        return result
+```kotlin
+fun findByNom(nom: String): Entraineur? {
+    var result: Entraineur? = null
+    val sql = "SELECT * FROM Entraineurs WHERE nom = ?"
+    val requetePreparer = bdd.connectionBDD!!.prepareStatement(sql)
+    requetePreparer.setString(1, nom)
+    val resultatRequete = bdd.executePreparedStatement(requetePreparer)
+
+    if (resultatRequete != null && resultatRequete.next()) {
+        val id = resultatRequete.getInt("id")
+        val argents = resultatRequete.getInt("argents")
+        result = Entraineur(id, nom, argents)
     }
-
-    fun findById(id: Int): Entraineur? {
-        var result: Entraineur? = null
-        val sql = "SELECT * FROM Entraineurs WHERE id = ?"
-        val requetePreparer = bdd.connectionBDD!!.prepareStatement(sql)
-        requetePreparer.setInt(1, id)
-        val resultatRequete = bdd.executePreparedStatement(requetePreparer)
-
-        if (resultatRequete != null && resultatRequete.next()) {
-            val nom = resultatRequete.getString("nom")
-            val argents = resultatRequete.getInt("argents")
-            result = Entraineur(id, nom, argents)
-        }
-        requetePreparer.close()
-        return result
-    }
-
-    // Autres méthodes CRUD : findByNom, save, saveAll, deleteById...
+    requetePreparer.close()
+    return result
 }
+
+Méthode save (Insertion)
+
+fun save(entraineur: Entraineur): Int {
+    val sql = "INSERT INTO Entraineurs(nom, argents) VALUES (?, ?)"
+    val requetePreparer = bdd.connectionBDD!!.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
+    requetePreparer.setString(1, entraineur.nom)
+    requetePreparer.setInt(2, entraineur.argents)
+    val nbLignesAffectees = requetePreparer.executeUpdate()
+
+    if (nbLignesAffectees == 0) throw SQLException("Échec de l'insertion, aucune ligne ajoutée.")
+
+    val generatedKeys = requetePreparer.generatedKeys
+    if (generatedKeys.next()) {
+        entraineur.id = generatedKeys.getInt(1)  // Mise à jour de l'id après insertion
+    }
+    requetePreparer.close()
+    return entraineur.id
+}
+
+Méthode saveAll
+
+fun saveAll(entraineurs: List<Entraineur>): List<Int> {
+    val ids = mutableListOf<Int>()
+    for (e in entraineurs) {
+        ids.add(save(e))
+    }
+    return ids
+}
+
+Méthode deleteById
+
+fun deleteById(id: Int): Boolean {
+    val sql = "DELETE FROM Entraineurs WHERE id = ?"
+    val requetePreparer = bdd.connectionBDD!!.prepareStatement(sql)
+    requetePreparer.setInt(1, id)
+    val rowsDeleted = requetePreparer.executeUpdate()
+    requetePreparer.close()
+    return rowsDeleted > 0
+}
+
+🔄 Étape 7 — Création de DAO pour les autres entités
+
+Il est conseillé de créer un DAO par entité pour maintenir la séparation des responsabilités et la clarté du code.
+Exemple : EspeceMonstreDAO
+
+    Fonctions similaires à EntraineurDAO :
+
+        findAll()
+
+        findById(id: Int)
+
+        save(espece: EspeceMonstre)
+
+        deleteById(id: Int)
+
+    Récupération des données spécifiques de l’espèce (attributs, modificateurs, description…)
+
+    Veiller à gérer les relations avec d’autres tables (par exemple, gestion des monstres individuels liés à une espèce).
+
+🔗 Étape 8 — Intégration dans le code principal
+
+    Modifiez Main.kt pour utiliser les DAO au lieu de créer les objets manuellement.
+
+fun main() {
+    val bdd = BDD()
+    val entraineurDAO = EntraineurDAO(bdd)
+
+    // Récupérer tous les entraîneurs depuis la BDD
+    val entraineurs = entraineurDAO.findAll()
+    entraineurs.forEach { println(it) }
+
+    // Exemple d'ajout d'un nouvel entraîneur
+    val nouveau = Entraineur(0, "Dylan", 2000)
+    entraineurDAO.save(nouveau)
+
+    // Fermeture de la connexion
+    bdd.close()
+}
+
+    Le projet doit maintenant être capable de charger dynamiquement toutes les données depuis la base.
+
+🧪 Étape 9 — Tests unitaires des DAO
+
+    Rédigez des tests pour chaque méthode de vos DAO afin de valider leur fonctionnement.
+
+Exemple avec JUnit pour findAll() :
+
+@Test
+fun testFindAllEntraineurs() {
+    val bdd = BDD()
+    val entraineurDAO = EntraineurDAO(bdd)
+    val entraineurs = entraineurDAO.findAll()
+
+    assertTrue(entraineurs.isNotEmpty())
+    assertTrue(entraineurs.any { it.nom == "Alice" })
+
+    bdd.close()
+}
+
+
