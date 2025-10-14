@@ -2,91 +2,72 @@
 
 ## 🎯 Contexte
 
-Ce troisième sprint a pour objectif d’introduire une connexion entre le projet *Kotlin Monsters* et une base de données relationnelle MySQL/MariaDB.
+Ce troisième sprint a pour objectif d’introduire une **connexion entre le projet _Kotlin Monsters_ et une base de données relationnelle MySQL/MariaDB.**
 
 Jusqu’à présent, les données (entraîneurs, monstres, espèces…) étaient créées directement dans le code (`Main.kt`).  
-Le but de ce module est de :  
-- Centraliser et stocker les données dans une base de données (BDD) ;
-- Automatiser la création, la lecture, la mise à jour et la suppression (CRUD) de ces données via des objets Kotlin ;
-- Utiliser un DAO (Data Access Object) pour simplifier les interactions entre le code et la BDD.
+Le but de ce module est de :
 
-En fin de sprint, le projet sera capable de charger automatiquement les entraîneurs, espèces et monstres depuis la base de données, sans avoir à les recréer dans le code.
+- 💾 Centraliser et stocker les données dans une base de données (BDD)
+- ⚙️ Automatiser les opérations CRUD (Create, Read, Update, Delete)
+- 🧠 Utiliser un DAO (*Data Access Object*) pour simplifier les interactions avec la BDD
+
+En fin de sprint, le projet sera capable de **charger automatiquement** les entraîneurs, espèces et monstres depuis la base de données.
 
 ---
 
-## 🧱 Étape 1 — Création de la base de données et des tables
+## 🧱 Étape 1 — Création de la base de données
 
-1. Connectez-vous au serveur de base de données via votre terminal et créez la base :
+1. Connectez-vous à votre serveur MySQL/MariaDB :
+   ```sql
+   CREATE DATABASE db_monsters_monlogin;
 
-```sql
-CREATE DATABASE db_monsters_monlogin;
+2. Dans IntelliJ IDEA, configurez une connexion :
+Database > New > Data Source > MariaDB
 
-    Dans IntelliJ IDEA, configurez une connexion à la BDD :
+Renseignez vos identifiants (IP, port, utilisateur, mot de passe)
 
-        Database > New > Data Source > MariaDB
+Téléchargez le driver si nécessaire
 
-        Renseignez vos identifiants (IP, port, utilisateur, mot de passe).
+Testez et validez la connexion
 
-        Téléchargez le driver si nécessaire et testez la connexion.
-
-        Validez avec Apply > OK.
-
-    Ouvrez une Query Console reliée à votre base.
-
-    Créez un fichier tables.sql dans le dossier resources et copiez-y vos requêtes SQL de création/insertion.
-
-    Exemple de création de table Entraineurs :
-
+3. Créez un fichier resources/tables.sql contenant vos requêtes SQL.
 CREATE TABLE Entraineurs(
     id INTEGER PRIMARY KEY AUTO_INCREMENT,
     nom VARCHAR(255),
     argents INTEGER
 );
+## 🧬 Étape 2 — Création des tables principales
 
-    ⚠️ Pensez à toujours commencer par créer les tables primaires (sans clés étrangères).
+Transformez les classes Kotlin suivantes en entités SQL :
+EspeceMonstre
+IndividuMonstre
+Entraineur
+Zone
 
-🧬 Étape 2 — Création des tables principales
+Créez un diagramme ERD (PlantUML) pour représenter vos relations.
+Ajoutez vos tables dans tables.sql.
 
-    Transformez les classes Kotlin (EspeceMonstre, IndividuMonstre, Entraineur, Zone) en entités relationnelles.
+## 🌱 Étape 3 — Insertion des données de base
 
-    Représentez-les dans un diagramme ERD avec PlantUML.
-
-    Complétez et ajoutez ce diagramme à votre projet et compte rendu.
-
-    Créez les tables EspecesMonstre et IndividusMonstre en SQL.
-
-    Ajoutez leurs requêtes dans tables.sql.
-
-🌱 Étape 3 — Insertion des données de base
-
-    Vérifiez que les tables existent bien dans la BDD.
-
-    Insérez des données tests :
-
-Exemple insertion entraîneurs :
-
-INSERT INTO Entraineurs (nom, argents) VALUES ('Bob', 1000), ('Alice', 1200), ('Clara', 1500);
-
-Exemple insertion espèces (extrait) :
+Insérez quelques données de test :
+INSERT INTO Entraineurs (nom, argents)
+VALUES ('Bob', 1000), ('Alice', 1200), ('Clara', 1500);
 
 INSERT INTO EspecesMonstre (id, nom, type, baseAttaque, baseDefense, baseVitesse, baseAttaqueSpe, baseDefenseSpe, basePv,
     modAttaque, modDefense, modVitesse, modAttaqueSpe, modDefenseSpe, modPv,
-    description, particularites, caracteres) VALUES
+    description, particularites, caracteres)
+VALUES
 (1, 'springleaf', 'Graine', 9, 11, 10, 12, 14, 60, 6.5, 9.0, 8.0, 7.0, 10.0, 14.0,
-'Un petit monstre espiègle...', 'Sa feuille sur la tête...', 'Curieux, amical, un peu timide.'),
--- autres espèces...
-;
+'Un petit monstre espiègle...', 'Sa feuille sur la tête...', 'Curieux, amical, un peu timide.');
 
-    Ajoutez également des individusMonstre associés.
+## ⚙️ Étape 4 — Connexion à la base dans Kotlin
 
-⚙️ Étape 4 — Connexion et gestion de la BDD dans Kotlin
+Ajoutez la dépendance JDBC MySQL dans build.gradle.kts :
+implementation("mysql:mysql-connector-java:8.0.33")
 
-    Ajoutez la dépendance JDBC MySQL dans build.gradle.kts via Maven Central.
-
-    Créez une classe BDD dans le package jdbc :
-
+Créez une classe BDD.kt :
 class BDD(
-    var url: String = "jdbc:mysql://localhost:3306/db_Monsters_monLogin",
+    var url: String = "jdbc:mysql://localhost:3306/db_monsters_monlogin",
     var user: String = "root",
     var password: String = ""
 ) {
@@ -95,8 +76,8 @@ class BDD(
     init {
         try {
             this.connectionBDD = getConnection()
-        } catch (erreur: SQLException) {
-            println("Erreur lors de la connexion à la base de données : ${erreur.message}")
+        } catch (e: SQLException) {
+            println("Erreur lors de la connexion : ${e.message}")
         }
     }
 
@@ -105,162 +86,85 @@ class BDD(
         return DriverManager.getConnection(url, user, password)
     }
 
-    fun executePreparedStatement(preparedStatement: PreparedStatement): ResultSet? {
-        return try {
-            preparedStatement.executeQuery()
-        } catch (erreur: SQLException) {
-            println("Erreur lors de l'exécution de la requête : ${erreur.message}")
+    fun executePreparedStatement(preparedStatement: PreparedStatement): ResultSet? =
+        try { preparedStatement.executeQuery() }
+        catch (e: SQLException) {
+            println("Erreur d'exécution : ${e.message}")
             null
         }
-    }
 
-    fun close() {
-        this.connectionBDD?.close()
-    }
+    fun close() = connectionBDD?.close()
 }
-
-    Testez la connexion dans Main.kt :
-
+Test de connexion :
 val db = BDD()
-// Avant la fin du main()
 db.close()
 
-🧪 Étape 5 — Tests unitaires de la connexion
-
-Exemple de test unitaire de la méthode executePreparedStatement :
-
+## 🧪 Étape 5 — Tests unitaires de la connexion
 @Test
 fun executePreparedStatement() {
     val bdd = BDD()
     val sql = bdd.connectionBDD!!.prepareStatement("SELECT * FROM Entraineurs")
-    val resultRequete = bdd.executePreparedStatement(sql)!!
+    val result = bdd.executePreparedStatement(sql)!!
 
     val dresseurs = mutableListOf<Entraineur>()
-    while (resultRequete.next()) {
-        val id = resultRequete.getInt("id")
-        val nom = resultRequete.getString("nom")
-        val argents = resultRequete.getInt("argents")
+    while (result.next()) {
+        val id = result.getInt("id")
+        val nom = result.getString("nom")
+        val argents = result.getInt("argents")
         dresseurs.add(Entraineur(id, nom, argents))
     }
 
     assertEquals(3, dresseurs.size)
+    bdd.close()
 }
+## 🧩 Étape 6 — DAO : Gestion des entraîneurs
+Création de EntraineurDAO.kt avec les méthodes suivantes :
 
-## ⚙️ Étape 6 — Création du DAO (suite)
+🔍 findByNom
+fun findByNom(nom: String): Entraineur? { ... }
 
-Après avoir créé `EntraineurDAO` avec les méthodes `findAll()` et `findById()`, complétons-le avec les autres opérations CRUD essentielles :
+💾 save
+fun save(entraineur: Entraineur): Int { ... }
 
-### Méthode `findByNom`
+💾 saveAll
+fun saveAll(entraineurs: List<Entraineur>): List<Int> { ... }
 
-```kotlin
-fun findByNom(nom: String): Entraineur? {
-    var result: Entraineur? = null
-    val sql = "SELECT * FROM Entraineurs WHERE nom = ?"
-    val requetePreparer = bdd.connectionBDD!!.prepareStatement(sql)
-    requetePreparer.setString(1, nom)
-    val resultatRequete = bdd.executePreparedStatement(requetePreparer)
+❌ deleteById
+fun deleteById(id: Int): Boolean { ... }
 
-    if (resultatRequete != null && resultatRequete.next()) {
-        val id = resultatRequete.getInt("id")
-        val argents = resultatRequete.getInt("argents")
-        result = Entraineur(id, nom, argents)
-    }
-    requetePreparer.close()
-    return result
-}
+## 🔄 Étape 7 — DAO des autres entités
 
-Méthode save (Insertion)
+Créez un DAO par entité pour séparer les responsabilités :
 
-fun save(entraineur: Entraineur): Int {
-    val sql = "INSERT INTO Entraineurs(nom, argents) VALUES (?, ?)"
-    val requetePreparer = bdd.connectionBDD!!.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
-    requetePreparer.setString(1, entraineur.nom)
-    requetePreparer.setInt(2, entraineur.argents)
-    val nbLignesAffectees = requetePreparer.executeUpdate()
+EspeceMonstreDAO
+IndividuMonstreDAO
+ZoneDAO
+Chaque DAO doit proposer :
+findAll()
+findById(id: Int)
+save(entity)
+deleteById(id: Int)
 
-    if (nbLignesAffectees == 0) throw SQLException("Échec de l'insertion, aucune ligne ajoutée.")
-
-    val generatedKeys = requetePreparer.generatedKeys
-    if (generatedKeys.next()) {
-        entraineur.id = generatedKeys.getInt(1)  // Mise à jour de l'id après insertion
-    }
-    requetePreparer.close()
-    return entraineur.id
-}
-
-Méthode saveAll
-
-fun saveAll(entraineurs: List<Entraineur>): List<Int> {
-    val ids = mutableListOf<Int>()
-    for (e in entraineurs) {
-        ids.add(save(e))
-    }
-    return ids
-}
-
-Méthode deleteById
-
-fun deleteById(id: Int): Boolean {
-    val sql = "DELETE FROM Entraineurs WHERE id = ?"
-    val requetePreparer = bdd.connectionBDD!!.prepareStatement(sql)
-    requetePreparer.setInt(1, id)
-    val rowsDeleted = requetePreparer.executeUpdate()
-    requetePreparer.close()
-    return rowsDeleted > 0
-}
-
-🔄 Étape 7 — Création de DAO pour les autres entités
-
-Il est conseillé de créer un DAO par entité pour maintenir la séparation des responsabilités et la clarté du code.
-Exemple : EspeceMonstreDAO
-
-    Fonctions similaires à EntraineurDAO :
-
-        findAll()
-
-        findById(id: Int)
-
-        save(espece: EspeceMonstre)
-
-        deleteById(id: Int)
-
-    Récupération des données spécifiques de l’espèce (attributs, modificateurs, description…)
-
-    Veiller à gérer les relations avec d’autres tables (par exemple, gestion des monstres individuels liés à une espèce).
-
-🔗 Étape 8 — Intégration dans le code principal
-
-    Modifiez Main.kt pour utiliser les DAO au lieu de créer les objets manuellement.
+## 🔗 Étape 8 — Intégration dans le Main.kt
 
 fun main() {
     val bdd = BDD()
     val entraineurDAO = EntraineurDAO(bdd)
 
-    // Récupérer tous les entraîneurs depuis la BDD
     val entraineurs = entraineurDAO.findAll()
     entraineurs.forEach { println(it) }
 
-    // Exemple d'ajout d'un nouvel entraîneur
     val nouveau = Entraineur(0, "Dylan", 2000)
     entraineurDAO.save(nouveau)
 
-    // Fermeture de la connexion
     bdd.close()
 }
-
-    Le projet doit maintenant être capable de charger dynamiquement toutes les données depuis la base.
-
-🧪 Étape 9 — Tests unitaires des DAO
-
-    Rédigez des tests pour chaque méthode de vos DAO afin de valider leur fonctionnement.
-
-Exemple avec JUnit pour findAll() :
-
+## 🧪 Étape 9 — Tests unitaires des DAO
 @Test
 fun testFindAllEntraineurs() {
     val bdd = BDD()
-    val entraineurDAO = EntraineurDAO(bdd)
-    val entraineurs = entraineurDAO.findAll()
+    val dao = EntraineurDAO(bdd)
+    val entraineurs = dao.findAll()
 
     assertTrue(entraineurs.isNotEmpty())
     assertTrue(entraineurs.any { it.nom == "Alice" })
@@ -268,4 +172,40 @@ fun testFindAllEntraineurs() {
     bdd.close()
 }
 
+📦 KotlinMonsters
+├── src
+│   ├── main
+│   │   ├── kotlin
+│   │   │   ├── dao
+│   │   │   │   ├── EntraineurDAO.kt
+│   │   │   │   └── EspeceMonstreDAO.kt
+│   │   │   ├── jdbc
+│   │   │   │   └── BDD.kt
+│   │   │   ├── model
+│   │   │   │   ├── Entraineur.kt
+│   │   │   │   └── EspeceMonstre.kt
+│   │   │   └── Main.kt
+│   │   └── resources
+│   │       └── tables.sql
+│   └── test
+│       └── kotlin
+│           └── dao
+│               └── EntraineurDAOTest.kt
+└── build.gradle.kts
+
+🚀 Objectifs du sprint
+
+✅ Connexion JDBC fonctionnelle
+✅ Base de données correctement structurée
+✅ DAO opérationnels (CRUD)
+✅ Chargement dynamique des données
+✅ Tests unitaires validés
+
+🧠 Auteur
+
+Projet Kotlin Monsters – Sprint 3 : BDD & DAO
+Développé dans le cadre d’un module Kotlin / POO / JDBC.
+
+👤 Josue Kialengela-tazi
+🌐 
 
