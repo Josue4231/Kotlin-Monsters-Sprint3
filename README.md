@@ -22,7 +22,7 @@ En fin de sprint, le projet sera capable de **charger automatiquement** les entr
    CREATE DATABASE db_monsters_monlogin;
 
 2. Dans IntelliJ IDEA, configurez une connexion :
-Database > New > Data Source > MariaDB
+   Database > New > Data Source > MariaDB
 
 Renseignez vos identifiants (IP, port, utilisateur, mot de passe)
 
@@ -33,9 +33,9 @@ Testez et validez la connexion
 3. Créez un fichier resources/tables.sql contenant vos requêtes SQL.
    ```sql
 CREATE TABLE Entraineurs(
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    nom VARCHAR(255),
-    argents INTEGER
+id INTEGER PRIMARY KEY AUTO_INCREMENT,
+nom VARCHAR(255),
+argents INTEGER
 );```
 ## 🧬 Étape 2 — Création des tables principales
 
@@ -97,15 +97,15 @@ class BDD(
         }
 
     fun close() = connectionBDD?.close()
-}```
-Test de connexion :
+} 
+// Test de connexion :
 val db = BDD()
 db.close()
-
+```
 ## 🧪 Étape 5 — Tests unitaires de la connexion
 
 
-   ```kotlin
+```kotlin
 @Test
 fun executePreparedStatement() {
     val bdd = BDD()
@@ -122,7 +122,10 @@ fun executePreparedStatement() {
 
     assertEquals(3, dresseurs.size)
     bdd.close()
-}``` 
+}
+```
+
+  
 ## 🧩 Étape 6 — DAO : Gestion des entraîneurs
 Création de EntraineurDAO.kt avec les méthodes suivantes :
 
@@ -164,7 +167,8 @@ fun main() {
     entraineurDAO.save(nouveau)
 
     bdd.close()
-}``` 
+}
+```
 ## 🧪 Étape 9 — Tests unitaires des DAO
 
 ```kotlin
@@ -178,7 +182,9 @@ fun testFindAllEntraineurs() {
     assertTrue(entraineurs.any { it.nom == "Alice" })
 
     bdd.close()
-}``` 
+}
+```
+
 
 📦 KotlinMonsters
 ├── src
@@ -217,4 +223,6 @@ Développé dans le cadre d’un module Kotlin / POO / JDBC.
 👤 Josue Kialengela-tazi
 
 🌐 https://github.com/Josue4231/kotlin-Monsters
+
+
 
