@@ -31,11 +31,12 @@ Téléchargez le driver si nécessaire
 Testez et validez la connexion
 
 3. Créez un fichier resources/tables.sql contenant vos requêtes SQL.
+   ```sql
 CREATE TABLE Entraineurs(
     id INTEGER PRIMARY KEY AUTO_INCREMENT,
     nom VARCHAR(255),
     argents INTEGER
-);
+);```
 ## 🧬 Étape 2 — Création des tables principales
 
 Transformez les classes Kotlin suivantes en entités SQL :
@@ -50,6 +51,7 @@ Ajoutez vos tables dans tables.sql.
 ## 🌱 Étape 3 — Insertion des données de base
 
 Insérez quelques données de test :
+```sql
 INSERT INTO Entraineurs (nom, argents)
 VALUES ('Bob', 1000), ('Alice', 1200), ('Clara', 1500);
 
@@ -59,13 +61,14 @@ INSERT INTO EspecesMonstre (id, nom, type, baseAttaque, baseDefense, baseVitesse
 VALUES
 (1, 'springleaf', 'Graine', 9, 11, 10, 12, 14, 60, 6.5, 9.0, 8.0, 7.0, 10.0, 14.0,
 'Un petit monstre espiègle...', 'Sa feuille sur la tête...', 'Curieux, amical, un peu timide.');
-
+``` 
 ## ⚙️ Étape 4 — Connexion à la base dans Kotlin
 
 Ajoutez la dépendance JDBC MySQL dans build.gradle.kts :
 implementation("mysql:mysql-connector-java:8.0.33")
 
 Créez une classe BDD.kt :
+```kotlin
 class BDD(
     var url: String = "jdbc:mysql://localhost:3306/db_monsters_monlogin",
     var user: String = "root",
@@ -94,12 +97,13 @@ class BDD(
         }
 
     fun close() = connectionBDD?.close()
-}
+}```
 Test de connexion :
 val db = BDD()
 db.close()
 
 ## 🧪 Étape 5 — Tests unitaires de la connexion
+```kotlin
 @Test
 fun executePreparedStatement() {
     val bdd = BDD()
@@ -116,7 +120,7 @@ fun executePreparedStatement() {
 
     assertEquals(3, dresseurs.size)
     bdd.close()
-}
+}``` 
 ## 🧩 Étape 6 — DAO : Gestion des entraîneurs
 Création de EntraineurDAO.kt avec les méthodes suivantes :
 
@@ -146,7 +150,7 @@ save(entity)
 deleteById(id: Int)
 
 ## 🔗 Étape 8 — Intégration dans le Main.kt
-
+```kotlin
 fun main() {
     val bdd = BDD()
     val entraineurDAO = EntraineurDAO(bdd)
@@ -158,8 +162,9 @@ fun main() {
     entraineurDAO.save(nouveau)
 
     bdd.close()
-}
+}``` 
 ## 🧪 Étape 9 — Tests unitaires des DAO
+```kotlin
 @Test
 fun testFindAllEntraineurs() {
     val bdd = BDD()
@@ -170,7 +175,7 @@ fun testFindAllEntraineurs() {
     assertTrue(entraineurs.any { it.nom == "Alice" })
 
     bdd.close()
-}
+}``` 
 
 📦 KotlinMonsters
 ├── src
@@ -208,5 +213,5 @@ Développé dans le cadre d’un module Kotlin / POO / JDBC.
 
 👤 Josue Kialengela-tazi
 
-🌐 https://github.com/Josue4231/Kotlin-Monsters-Sprint3
+🌐 https://github.com/Josue4231/kotlin-Monsters
 
