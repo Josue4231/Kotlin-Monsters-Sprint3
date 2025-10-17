@@ -102,8 +102,8 @@ Test de connexion :
 val db = BDD()
 db.close()
 
-## 🧪 Étape 5 — Tests unitaires de la connexion
-```kotlin
+🧪 Étape 5 — Tests unitaires de la connexion
+   ```kotlin
 @Test
 fun executePreparedStatement() {
     val bdd = BDD()
