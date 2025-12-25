@@ -2,55 +2,55 @@
 
 ## 🎯 Contexte
 
-Ce troisième sprint a pour objectif d’introduire une **connexion entre le projet _Kotlin Monsters_ et une base de données relationnelle MySQL/MariaDB.**
+Le **Sprint 3** vise à connecter le projet *Kotlin Monsters* à une **base de données relationnelle** (MySQL/MariaDB).  
+Avant ce sprint, toutes les données (entraîneurs, monstres, espèces) étaient définies dans le code (`Main.kt`).  
+L’objectif est maintenant de :
 
-Jusqu’à présent, les données (entraîneurs, monstres, espèces…) étaient créées directement dans le code (`Main.kt`).  
-Le but de ce module est de :
-
-- 💾 Centraliser et stocker les données dans une base de données (BDD)
-- ⚙️ Automatiser les opérations CRUD (Create, Read, Update, Delete)
-- 🧠 Utiliser un DAO (*Data Access Object*) pour simplifier les interactions avec la BDD
-
-En fin de sprint, le projet sera capable de **charger automatiquement** les entraîneurs, espèces et monstres depuis la base de données.
+- 💾 Centraliser et stocker les données dans une BDD
+- ⚙️ Automatiser les opérations **CRUD** (Create, Read, Update, Delete)
+- 🧠 Utiliser un **DAO** (*Data Access Object*) pour simplifier les interactions avec la base
+- 🔄 Charger dynamiquement les données dans le jeu
 
 ---
 
 ## 🧱 Étape 1 — Création de la base de données
 
-1. Connectez-vous à votre serveur MySQL/MariaDB :
-   ```sql
-   CREATE DATABASE db_monsters_monlogin;
+1. Connectez-vous à votre serveur MySQL/MariaDB et créez la base :
 
-2. Dans IntelliJ IDEA, configurez une connexion :
-   Database > New > Data Source > MariaDB
+```sql
+CREATE DATABASE db_monsters_monlogin;
+USE db_monsters_monlogin;
+```
+2. Dans IntelliJ IDEA :
+Database > New > Data Source > MariaDB
+Renseignez les identifiants et testez la connexion.
 
-Renseignez vos identifiants (IP, port, utilisateur, mot de passe)
-
-Téléchargez le driver si nécessaire
-
-Testez et validez la connexion
-
-3. Créez un fichier resources/tables.sql contenant vos requêtes SQL.
-   ```sql
+Créez un fichier resources/tables.sql avec vos tables :
+```sql
 CREATE TABLE Entraineurs(
-id INTEGER PRIMARY KEY AUTO_INCREMENT,
-nom VARCHAR(255),
-argents INTEGER
-);```
+    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    nom VARCHAR(255),
+    argents INTEGER
+);
+```
+---
+
 ## 🧬 Étape 2 — Création des tables principales
 
-Transformez les classes Kotlin suivantes en entités SQL :
+Convertissez les classes Kotlin en entités SQL :
+
 EspeceMonstre
 IndividuMonstre
 Entraineur
 Zone
 
-Créez un diagramme ERD (PlantUML) pour représenter vos relations.
-Ajoutez vos tables dans tables.sql.
+Créez un diagramme ERD (PlantUML) pour visualiser les relations.
+Ajoutez les tables correspondantes dans tables.sql.
+---
 
-## 🌱 Étape 3 — Insertion des données de base
+## 🌱 Étape 3 — Insertion de données de base
 
-Insérez quelques données de test :
+Exemple d’insertion pour tester la base :
 ```sql
 INSERT INTO Entraineurs (nom, argents)
 VALUES ('Bob', 1000), ('Alice', 1200), ('Clara', 1500);
@@ -61,11 +61,15 @@ INSERT INTO EspecesMonstre (id, nom, type, baseAttaque, baseDefense, baseVitesse
 VALUES
 (1, 'springleaf', 'Graine', 9, 11, 10, 12, 14, 60, 6.5, 9.0, 8.0, 7.0, 10.0, 14.0,
 'Un petit monstre espiègle...', 'Sa feuille sur la tête...', 'Curieux, amical, un peu timide.');
-``` 
+```
+---
+
 ## ⚙️ Étape 4 — Connexion à la base dans Kotlin
 
-Ajoutez la dépendance JDBC MySQL dans build.gradle.kts :
+Ajoutez la dépendance JDBC dans build.gradle.kts :
+```kotlin
 implementation("mysql:mysql-connector-java:8.0.33")
+```
 
 Créez une classe BDD.kt :
 ```kotlin
@@ -97,14 +101,14 @@ class BDD(
         }
 
     fun close() = connectionBDD?.close()
-} 
-// Test de connexion :
+}
+
+// Test de connexion
 val db = BDD()
 db.close()
 ```
+
 ## 🧪 Étape 5 — Tests unitaires de la connexion
-
-
 ```kotlin
 @Test
 fun executePreparedStatement() {
@@ -124,37 +128,36 @@ fun executePreparedStatement() {
     bdd.close()
 }
 ```
+---
 
-  
 ## 🧩 Étape 6 — DAO : Gestion des entraîneurs
-Création de EntraineurDAO.kt avec les méthodes suivantes :
 
-🔍 findByNom
-fun findByNom(nom: String): Entraineur? { ... }
+Création de EntraineurDAO.kt avec :
 
-💾 save
-fun save(entraineur: Entraineur): Int { ... }
+findByNom : fun findByNom(nom: String): Entraineur?
+save : fun save(entraineur: Entraineur): Int
+saveAll : fun saveAll(entraineurs: List<Entraineur>): List<Int>
+deleteById : fun deleteById(id: Int): Boolean
 
-💾 saveAll
-fun saveAll(entraineurs: List<Entraineur>): List<Int> { ... }
-
-❌ deleteById
-fun deleteById(id: Int): Boolean { ... }
+---
 
 ## 🔄 Étape 7 — DAO des autres entités
 
-Créez un DAO par entité pour séparer les responsabilités :
+Pour chaque entité :
 
 EspeceMonstreDAO
 IndividuMonstreDAO
 ZoneDAO
-Chaque DAO doit proposer :
+
+Chaque DAO propose :
+
 findAll()
 findById(id: Int)
 save(entity)
-deleteById(id: Int)
+deleteById(id)
 
-## 🔗 Étape 8 — Intégration dans le Main.kt
+---
+## 🔗 Étape 8 — Intégration dans Main.kt
 ```kotlin
 fun main() {
     val bdd = BDD()
@@ -169,9 +172,8 @@ fun main() {
     bdd.close()
 }
 ```
-## 🧪 Étape 9 — Tests unitaires des DAO
-
-```kotlin
+---
+🧪 Étape 9 — Tests unitaires des DAO
 @Test
 fun testFindAllEntraineurs() {
     val bdd = BDD()
@@ -183,10 +185,12 @@ fun testFindAllEntraineurs() {
 
     bdd.close()
 }
-```
 
+---
 
-📦 KotlinMonsters
+## 📦 Structure finale du Sprint 3
+
+```css
 ├── src
 │   ├── main
 │   │   ├── kotlin
@@ -206,8 +210,10 @@ fun testFindAllEntraineurs() {
 │           └── dao
 │               └── EntraineurDAOTest.kt
 └── build.gradle.kts
+```
+---
 
-🚀 Objectifs du sprint
+## 🚀 Objectifs atteints
 
 ✅ Connexion JDBC fonctionnelle
 ✅ Base de données correctement structurée
@@ -217,12 +223,5 @@ fun testFindAllEntraineurs() {
 
 🧠 Auteur
 
-Projet Kotlin Monsters – Sprint 3 : BDD & DAO
-Développé dans le cadre d’un module Kotlin / POO / JDBC.
-
-👤 Josue Kialengela-tazi
-
-🌐 https://github.com/Josue4231/kotlin-Monsters
-
-
-
+Josue Kialengela-Tazi
+Fin
